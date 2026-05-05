@@ -22,6 +22,7 @@ async def _help(_, m: types.Message):
         text=m.lang["help_menu"],
         reply_markup=buttons.help_markup(m.lang),
         quote=True,
+        parse_mode=enums.ParseMode.HTML # <--- ထည့်သွင်းချက်
     )
 
 
@@ -29,7 +30,7 @@ async def _help(_, m: types.Message):
 @lang.language()
 async def start(_, message: types.Message):
     if message.from_user.id in app.bl_users and message.from_user.id not in db.notified:
-        return await message.reply_text(message.lang["bl_user_notify"])
+        return await message.reply_text(message.lang["bl_user_notify"], parse_mode=enums.ParseMode.HTML)
 
     if len(message.command) > 1 and message.command[1] == "help":
         return await _help(_, message)
@@ -42,6 +43,7 @@ async def start(_, message: types.Message):
         caption=_text,
         reply_markup=buttons.start_key(message.lang, private),
         quote=not private,
+        parse_mode=enums.ParseMode.HTML # <--- ထည့်သွင်းချက် (Premium Emoji ပေါ်ဖို့)
     )
 
     if private:
@@ -63,6 +65,7 @@ async def nav_help(_, query: types.CallbackQuery):
         await query.message.edit_caption(
             caption=_lang["help_menu"],
             reply_markup=buttons.help_markup(_lang, back=True),
+            parse_mode=enums.ParseMode.HTML # <--- ထည့်သွင်းချက်
         )
     except Exception:
         pass
@@ -76,6 +79,7 @@ async def nav_start(_, query: types.CallbackQuery):
         await query.message.edit_caption(
             caption=_start_text(_lang, query.from_user.first_name, True),
             reply_markup=buttons.start_key(_lang, True),
+            parse_mode=enums.ParseMode.HTML # <--- ထည့်သွင်းချက်
         )
     except Exception:
         pass
@@ -94,6 +98,7 @@ async def settings(_, message: types.Message):
             message.lang, admin_only, cmd_delete, _language, message.chat.id
         ),
         quote=True,
+        parse_mode=enums.ParseMode.HTML # <--- ထည့်သွင်းချက်
     )
 
 
