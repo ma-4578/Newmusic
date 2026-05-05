@@ -1,8 +1,7 @@
 #Khithlainhtet
 
 from pathlib import Path
-
-from pyrogram import filters, types
+from pyrogram import enums, filters, types # enums ကို import ထည့်ထားပါတယ်
 
 from Newmusic import anon, app, config, db, lang, queue, tg, yt
 from Newmusic.helpers import buttons, utils
@@ -33,7 +32,8 @@ async def play_hndlr(
     video: bool = False,
     url: str = None,
 ) -> None:
-    sent = await m.reply_text(m.lang["play_searching"])
+    # Searching message မှာ HTML parse mode ထည့်ပါတယ်
+    sent = await m.reply_text(m.lang["play_searching"], parse_mode=enums.ParseMode.HTML)
     file = None
     mention = m.from_user.mention
     media = tg.get_media(m.reply_to_message) if m.reply_to_message else None
@@ -50,11 +50,11 @@ async def play_hndlr(
     elif url:
         if "playlist" in url:
             is_playlist = True
-            await sent.edit_text(m.lang["playlist_fetch"])
-            tracks = await yt.playlist(config.PLAYLIST_LIMIT, mention, url, video)
+            await sent.edit_text(m.lang["playlist_fetch"], parse_mode=enums.ParseMode.HTML)
+            tracks = await yt.playlist(config.PLAY_LIMIT, mention, url, video)
 
             if not tracks:
-                return await sent.edit_text(m.lang["playlist_error"])
+                return await sent.edit_text(m.lang["playlist_error"], parse_mode=enums.ParseMode.HTML)
 
             file = tracks.pop(0)
             file.message_id = sent.id
@@ -63,7 +63,8 @@ async def play_hndlr(
 
         if not file:
             return await sent.edit_text(
-                m.lang["play_not_found"].format(config.SUPPORT_CHAT)
+                m.lang["play_not_found"].format(config.SUPPORT_CHAT),
+                parse_mode=enums.ParseMode.HTML
             )
 
     elif len(m.command) >= 2:
@@ -71,15 +72,17 @@ async def play_hndlr(
         file = await yt.search(query, sent.id, video=video)
         if not file:
             return await sent.edit_text(
-                m.lang["play_not_found"].format(config.SUPPORT_CHAT)
+                m.lang["play_not_found"].format(config.SUPPORT_CHAT),
+                parse_mode=enums.ParseMode.HTML
             )
 
     if not file:
-        return await sent.edit_text(m.lang["play_usage"])
+        return await sent.edit_text(m.lang["play_usage"], parse_mode=enums.ParseMode.HTML)
 
     if file.duration_sec > config.DURATION_LIMIT:
         return await sent.edit_text(
-            m.lang["play_duration_limit"].format(config.DURATION_LIMIT // 60)
+            m.lang["play_duration_limit"].format(config.DURATION_LIMIT // 60),
+            parse_mode=enums.ParseMode.HTML
         )
 
     if await db.is_logger():
@@ -92,6 +95,7 @@ async def play_hndlr(
         position = queue.add(m.chat.id, file)
 
         if position != 0 or await db.get_call(m.chat.id):
+            # Queue message မှာ Premium Emoji ပေါ်အောင် parse mode ထည့်ထားပါတယ်
             await sent.edit_text(
                 m.lang["play_queued"].format(
                     position,
@@ -103,12 +107,14 @@ async def play_hndlr(
                 reply_markup=buttons.play_queued(
                     m.chat.id, file.id, m.lang["play_now"]
                 ),
+                parse_mode=enums.ParseMode.HTML
             )
             if tracks:
                 added = playlist_to_queue(m.chat.id, tracks)
                 await app.send_message(
                     chat_id=m.chat.id,
                     text=m.lang["playlist_queued"].format(len(tracks)) + added,
+                    parse_mode=enums.ParseMode.HTML
                 )
             return
 
@@ -124,7 +130,7 @@ async def play_hndlr(
         if cached:
             file.file_path = cached
         else:
-            await sent.edit_text(m.lang["play_downloading"])
+            await sent.edit_text(m.lang["play_downloading"], parse_mode=enums.ParseMode.HTML)
             file.file_path = await yt.download(file.id, video=video)
 
     try:
@@ -144,4 +150,5 @@ async def play_hndlr(
     await app.send_message(
         chat_id=m.chat.id,
         text=m.lang["playlist_queued"].format(len(tracks)) + added,
+        parse_mode=enums.ParseMode.HTML
     )
