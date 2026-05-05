@@ -26,7 +26,7 @@ async def _ping(_, m: types.Message):
                 psutil.cpu_percent(interval=0),
                 psutil.virtual_memory().percent,
                 psutil.disk_usage("/").percent,
-                await anon.ping(),
+                0,
             )
         ),
         reply_markup=buttons.ping_markup(m.lang["support"]),
